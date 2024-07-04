@@ -44,35 +44,36 @@ togoc(x) = use_CUDA[] ? CuArray(x) : x
 TableOfContents()
 
 # ╔═╡ 6907dc0e-21c0-4de7-85c3-fe5030d139c2
-md"# 0. Wave and Ray Optics for Light Based Tomographic 3D printing
-.
+md"""# 0. Wave and Ray Optics for Light Based Tomographic 3D printing
+
+
 
 [Felix Wechsler](https://felixwechsler.science/), PhD student EPFL in Switzerland.
-"
+
+
+!!! error "Abstract"
+	Light based tomographic 3D printing is a new emerging field requiring the optimization of large scale optical problems.
+	Simulating and optimizing parameters of those problems needs high performance packages, which we develop in Julia Lang.
+	The implementation features CUDA acceleration (partially based on KernelAbstractions.jl) and automatic differentiation capabilities.
+	We talk about ray tracing based methods such as the Radon transform but are also going to cover the wave nature of light.
+"""
 
 # ╔═╡ b595a0be-9f3a-431b-af4b-1093ca1597d2
 urldownload("https://upload.wikimedia.org/wikipedia/commons/e/e2/EPFL_campus_2017.jpg")
-
-# ╔═╡ 8f3214dd-c598-4913-80ec-048061f45575
-
 
 # ╔═╡ 27d5c3e5-139f-4830-a569-b41cf0e954b9
 md"# 1. Tomographic Additive Manufacturing (TVAM)
 
 * TVAM is a single photon absorption printing technique
-* Acrylates are mixed with a photo initiator
-* A voxel in space polymerizes if enough light is accumulated at a voxel in space.
-* Parts can be printed in ~20s.
+* Acrylates are mixed with a photo initiator and polymerize upon illumination with light
+* Parts can be printed within ~20s.
 
 "
 
-# ╔═╡ 6ff9759e-88c7-4ccf-8494-74d461b51e03
-
-
 # ╔═╡ ae487900-9801-4863-b65e-f6e3d91c9f87
-md"## General Setup
+md"### General Setup
 * Collimated Light is projected onto a light modulator
-* the light modulator can create grayscale images
+* the light modulator modulates grayscale images
 * those images are re-imaged into the rotation resin
 * the images are changed for different rotation angles
 
@@ -80,7 +81,7 @@ md"## General Setup
 * mathematically this is reverse Computed Tomography (CT)
 
 
-## Applications
+### Applications
 
 * Bioprinting
 * Optical components
@@ -92,10 +93,10 @@ md"## General Setup
 load("setup.png")
 
 # ╔═╡ f75e0d3a-8dad-488d-87e4-b2c989fe0033
-md"## Video in Real Time"
+md"## Video in Real Speed"
 
 # ╔═╡ d238e778-d7b6-4f3b-997a-b167407536b0
-
+PlutoUI.LocalResource("julia_cut.mp4")
 
 # ╔═╡ 8e88bd76-5bf7-4f5b-8baf-4831c6a13a87
 md"""# 2. General Introduction - Radon transform
@@ -108,17 +109,15 @@ Where  $\omega=(\cos \theta, \sin \theta)$ and  $\omega^{\perp}=(-\sin \theta, \
 
 The resulting object $g$ is called the sinogram and stores the projections for different angles.
 
-!!! warning "Optimization Problem"
-	There is an adjoint operation (the backprojection) which is not the inverse. 
-	Mathematically, the printer performs the backprojection.
-	In CT people use the filtered backprojection to obtain the real reconstruction. However, the filtered backprojection requires negatives intensities which we cannot project.
-"""
 
-# ╔═╡ 1f3b7d89-784f-4efc-aa46-b900cdbe58c4
-julia_logo = Float32.(select_region(ImageShow.Gray.(urldownload("https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Julia_Programming_Language_Logo.svg/320px-Julia_Programming_Language_Logo.svg.png")) .> 0, new_size=(400, 400)));
+
+"""
 
 # ╔═╡ 7a3c18b8-a252-4dda-aeed-e6743999f64e
 md"## Let's take the Julia Logo"
+
+# ╔═╡ 1f3b7d89-784f-4efc-aa46-b900cdbe58c4
+julia_logo = Float32.(select_region(ImageShow.Gray.(urldownload("https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Julia_Programming_Language_Logo.svg/320px-Julia_Programming_Language_Logo.svg.png")) .> 0, new_size=(400, 400)));
 
 # ╔═╡ 4092cfef-58d0-460e-9d72-80b70f35bad5
 simshow(julia_logo)
@@ -149,30 +148,43 @@ end
 # ╔═╡ 6da1e762-70bb-42bd-b968-17e5c878f708
 simshow(sinogram_j')
 
-# ╔═╡ fa732d6c-be8f-4cbe-afe9-627887020627
-julia_logo_b = backproject(sinogram_j, angles);
-
-# ╔═╡ f9107225-de5d-4ed9-9933-ff12adea699e
-md"
-The tomographic printer, project essentially a sinogram into the photosensitive resin
-
-"
-
 # ╔═╡ 40426385-5fc7-42ad-8626-468beca767ea
-md"## Backproject the patterns
-The printer projects patterns from different angles into the resin.
-In the resins, the energy dose of the patterns adds up.
+md"""## Backproject the patterns
 
-The light smears intensity in all regions.
-"
+To recover the image, we can *smear* the projections back into the volume.
+Because intensity is distributed everywhere, the reconstruction is blurry.
+
+
+$$(\mathcal{R}_{\mu}^* g)(x, y) = \int_{0}^{2\pi} g( \pmb{\omega} \cdot [x,y]^{\intercal}, \theta) \,\, \mathrm{d}\theta$$
+
+
+In classical compputed tomography (CT), people apply a filter to obtain the *filtered backprojection* which results in the perfect reconstruction.
+The problem is, the filtered backprojection results in negative projection intensities which we can not realize with our laser light source.
+
+where $\omega=(\cos \theta, \sin \theta)$.
+"""
+
+# ╔═╡ fa732d6c-be8f-4cbe-afe9-627887020627
+@time julia_logo_b = backproject(sinogram_j, angles);
+
+# ╔═╡ 53296600-c09e-41f7-9d35-4cf04cf56a81
+md"### Blurry Julia"
 
 # ╔═╡ 697ba854-cef4-45c0-9d18-23c7847c1f8b
-heatmap(simshow(julia_logo_b, cmap=:turbo), xlim=(0, 400), ylim=(0, 400))
+simshow(julia_logo_b, cmap=:turbo)
+
+# ╔═╡ 177ef1a0-038c-4a50-ae69-dd18f8027ae4
+md"### Sharp Julia"
+
+# ╔═╡ 724689b7-54a6-4f51-89c8-1b249db54fcf
+simshow(backproject_filtered(sinogram_j, angles), cmap=:gray)
 
 # ╔═╡ 447d4078-d407-4f27-b10a-0d17c4ec1a1a
 md"## Resin has a threshold tolerance
 
-Not everything polymerizes, only if a certain light threshold is reached.
+So can we simply project the sinogram as patterns on the printer?
+
+Not the whole volume polymerizes only if a certain light threshold is reached, the polymerization starts.
 
 "
 
@@ -189,8 +201,8 @@ As seen, taking the Radon transform and backprojecting those patterns does not w
 
 Instead, we need to solve the following optimization problem:
 
-!!! warning "Optimization Problem"
-	What are the patterns $p$ such that object voxels receive more intensity than an upper threshold $T_U$ and void void voxels receive more intensity than a lower threshold $T_L$?
+!!! info "Optimization Problem"
+	What are the patterns $p$ such that object voxels receive more intensity than an upper threshold $T_U$ and void voxels receive less intensity than a lower threshold $T_L$?
 
 We can use gradient descent and automatic differentiation to solve this problem.
 
@@ -209,7 +221,7 @@ md"# 4. Summary TVAM
 load("general.png")
 
 # ╔═╡ a2956b5b-99e7-467d-a60e-552006808800
-md"# Julia Solutions
+md"# 5. Julia Solutions
 
 What we needed:
 
@@ -222,7 +234,7 @@ What we had to create:
 * Wave optical simulations
 
 
-As a rough estimate, we optimize patterns of size $1024 \times 768$ for 1000 angles. That is almost a billion variables.
+As a rough estimate, we optimize patterns of size $1024 \times 768$ for $1000$ angles. That is almost a billion variables.
 Further, the 3D Radon transform has a computational complexity of $N^3 \times N_\text{angles}$ where $N$ is the discretization of the volume.
 So pattern optimization for TVAM is a very heavy optimization problem.
 
@@ -257,8 +269,11 @@ end
 
 # ╔═╡ 7c0b4013-d858-4cc1-9dd3-b9aa9e54a078
 geometry_extreme = RadonFlexibleCircle(N,
-	                                   -(N-1)÷2:(N-1)÷2, 
-									   50 .+ zeros((199,)))
+	                                   range(-10, 99, 199), 
+									   range(-20, 20, 199))
+
+# ╔═╡ c24510be-dc38-42e4-946a-bcef4b817cda
+length( -99:100)
 
 # ╔═╡ ef52fdeb-7fa2-4c06-addd-f65e486cdb0d
 @time projected_extreme = backproject(sinogram, [0.0]; geometry=geometry_extreme);
@@ -272,10 +287,10 @@ CUDA provides us a 30x speed-up in this case!
 "
 
 # ╔═╡ cb64a24e-8a8b-4d69-a129-624d96f16656
-angles3 = range(0, 2π, 500)
+angles5 = range(0, 2π, 500)
 
 # ╔═╡ c132e982-0f6e-4d5a-8ae1-d0bf9e52de4a
-@time radon(julia_logo, angles3);
+@time radon(julia_logo, angles5);
 
 # ╔═╡ 92d1e078-bdb5-4ed2-9f12-68b5a02584d3
 md"## SwissVAMyKnife.jl
@@ -306,7 +321,7 @@ end;
 md"### Loss Function and Optimizer"
 
 # ╔═╡ a86bad03-06c5-4a8e-9f63-aa98e6ef67ad
-loss = LossThreshold(thresholds=(0.93, 0.97))
+loss = LossThreshold(thresholds=(0.9, 0.97))
 
 # ╔═╡ 3e811eb2-dc71-4ee5-89f7-d53fa1d4535b
 optimizer = GradientBased(optimizer=Optim.LBFGS(), options=Optim.Options(iterations=20, store_trace=true,
@@ -319,7 +334,7 @@ md"### Physical Parameters"
 angles2 = range(0, 2π, 201)[begin:end-1]
 
 # ╔═╡ 2a85c951-5497-4145-90fc-0506a83a5e88
-geometry_vial = ParallelRayOptics(angles=angles, μ=195.71, DMD_diameter=12.95e-3,)
+geometry_vial = ParallelRayOptics(angles=angles2, μ=200, DMD_diameter=12.95e-3,)
 
 # ╔═╡ 84a7992b-046b-4401-9320-75acd601c104
 md"### Optimize"
@@ -332,6 +347,9 @@ md"### Analyze Results"
 
 # ╔═╡ 38ca6db1-2f36-47ea-b7ae-326a550eac29
 md"The intersection over union is: $(round(calculate_IoU(togoc(target), printed_intensity_vial .> (sum(loss.thresholds)/2)), digits=3))"
+
+# ╔═╡ 857dc8d5-e96c-4ac5-a2f2-bab07fca8542
+plot_intensity_histogram(target, printed_intensity_vial, loss.thresholds)
 
 # ╔═╡ 215d7e6b-53ca-4d94-bdde-7cb6ee3554c7
 md"Choose threshold for image: $(@bind thresh4 PlutoUI.Slider(0:0.01:1, show_value=true, default=0.7))"
@@ -376,10 +394,16 @@ z = range(0, 1000f-6, 399)
 # ╔═╡ c62d33e2-b647-4c40-901f-3a7382b18289
 λ = 405f-9
 
+# ╔═╡ e4494982-70e0-4f2b-8ea0-d2f8828948b2
+angles3 = [0.0]
+
+# ╔═╡ d0cbfab9-6e38-403f-9d12-2a07e145ce7d
+sinogram_j3 = radon(julia_logo, angles3);
+
 # ╔═╡ 97019084-b64c-4845-a466-4b5ddaccd846
 begin
 	field = zeros(ComplexF32, (399,2))
-	field[:, :] .= sqrt.(sinogram_j[:, 1])
+	field[:, :] .= sqrt.(sinogram_j3[:, 1])
 end;
 
 # ╔═╡ 0c7acd80-b741-4515-80c0-62ad18e794aa
@@ -389,13 +413,13 @@ AS = AngularSpectrum(field, z, λ, L);
 field_p = AS(field);
 
 # ╔═╡ f50ae1bc-1f7b-4d17-9272-f2279d5ca329
-heatmap(z .* 1_000_000, fftpos(L[1] * 1_000_000, 399, CenterFT),  (backproject(sinogram_j[:, 1:1], [0])' .> 0)[1:399, 1:399] .* reverse(abs2.(field_p[:, 1, :]), dims=(1,)), xlabel = "z in \$\\mu m\$", ylabel = "x in \$\\mu m\$", aspect_ratio=:equal, xlim=(0, 1000), title="Wave Optics")
+heatmap(z .* 1_000_000, fftpos(L[1] * 1_000_000, 399, CenterFT),  (backproject(sinogram_j3[:, 1:1], [0])' .> 0)[1:399, 1:399] .* reverse(abs2.(field_p[:, 1, :]), dims=(1,)), xlabel = "z in \$\\mu m\$", ylabel = "x in \$\\mu m\$", aspect_ratio=:equal, xlim=(0, 1000), title="Wave Optics")
 
 # ╔═╡ 2fe42b52-44d2-45af-8a8d-e1fbd463723e
-heatmap(backproject(sinogram_j[:, 1:1], [0])'[end:-1:begin, :], aspect_ratio=:equal, xlim=(0, 400), title="Ray Optics")
+heatmap(backproject(sinogram_j3[:, 1:1], [0])'[end:-1:begin, :], aspect_ratio=:equal, xlim=(0, 400), title="Ray Optics")
 
 # ╔═╡ 0ab48aad-8a16-40d8-b980-7d6e083ea923
-md"# 5. Wave Optics for TVAM
+md"# 6. Wave Optics for TVAM
 
 If we want to print small objects, ray optics is not a sufficient description anymore.
 
@@ -408,9 +432,6 @@ We simulated volumes of $550^3$ voxels. The ray optical runtime was ~5mins for t
 
 # ╔═╡ 2e2bd7bb-1027-4bb8-9335-5b980043909d
 load("wave_vs_ray.png")
-
-# ╔═╡ 6ddeb872-299b-4ff2-a695-233213fbe857
-
 
 # ╔═╡ 41ab15f9-4fae-46ce-9c9c-8cde32734b70
 md"## DiffImageRotation.jl
@@ -466,7 +487,6 @@ end
 
 # ╔═╡ ae7bd4e6-ba54-4979-9d46-38eeec397b16
 function _imrotate(arr::AbstractArray{T, 2}, θ;  midpoint=size(arr) .÷ 2 .+ 1) where T
-
 	out = similar(arr)
 	fill!(out, 0)
 	
@@ -485,8 +505,11 @@ end
 # ╔═╡ afb077c8-6993-4c95-9a08-68bd7b53cee3
 @mytime _imrotate(julia_logo, deg2rad(40));
 
+# ╔═╡ 0265c39b-d981-49f0-b696-8385b9d64a80
+julia_logo_c = CuArray(julia_logo);
+
 # ╔═╡ 6ba75d25-b5c1-419e-95a0-0a946cca05a7
-CUDA.@time radon(julia_logo_c, angles3);
+CUDA.@time radon(julia_logo_c, angles5);
 
 # ╔═╡ 93be5ce3-e335-4500-a3bd-1cad5698305c
 @mytime _imrotate(julia_logo_c, deg2rad(40));
@@ -495,7 +518,7 @@ CUDA.@time radon(julia_logo_c, angles3);
 simshow(_imrotate(julia_logo, deg2rad(40)))
 
 # ╔═╡ 3943b1f3-2779-47b7-847f-8ebe0a89fd85
-md"## 6. Summary
+md"# 7. Summary
 Tomographic Volumetric Additive Manufacturing is an emerging rapid 3D printing technique.
 
 With our packages
@@ -519,15 +542,6 @@ Some of the package we used:
 
 # ╔═╡ 6aa0de0f-b6a4-4180-81cd-63dff002cf7b
 load("general.png")
-
-# ╔═╡ a0a0a9f5-0717-4b0d-9b33-80db05ca40c2
-# ╠═╡ disabled = true
-#=╠═╡
-julia_logo_c = CuArray(julia_logo);
-  ╠═╡ =#
-
-# ╔═╡ 0265c39b-d981-49f0-b696-8385b9d64a80
-julia_logo_c = CuArray(julia_logo);
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2661,16 +2675,14 @@ version = "1.4.1+1"
 # ╠═199f2467-04a1-4774-9728-8a9ca44d6d88
 # ╟─6907dc0e-21c0-4de7-85c3-fe5030d139c2
 # ╟─b595a0be-9f3a-431b-af4b-1093ca1597d2
-# ╠═8f3214dd-c598-4913-80ec-048061f45575
 # ╟─27d5c3e5-139f-4830-a569-b41cf0e954b9
-# ╠═6ff9759e-88c7-4ccf-8494-74d461b51e03
 # ╟─ae487900-9801-4863-b65e-f6e3d91c9f87
-# ╠═334612a8-f0d4-4892-b5be-b3ae6a98cec0
+# ╟─334612a8-f0d4-4892-b5be-b3ae6a98cec0
 # ╟─f75e0d3a-8dad-488d-87e4-b2c989fe0033
-# ╠═d238e778-d7b6-4f3b-997a-b167407536b0
+# ╟─d238e778-d7b6-4f3b-997a-b167407536b0
 # ╟─8e88bd76-5bf7-4f5b-8baf-4831c6a13a87
-# ╟─1f3b7d89-784f-4efc-aa46-b900cdbe58c4
 # ╟─7a3c18b8-a252-4dda-aeed-e6743999f64e
+# ╟─1f3b7d89-784f-4efc-aa46-b900cdbe58c4
 # ╟─4092cfef-58d0-460e-9d72-80b70f35bad5
 # ╠═365c6dd4-4041-4d7f-8d8a-fa78854ef2e1
 # ╟─0c171f57-fe3f-45c8-85f0-6acdc00d4c4d
@@ -2678,28 +2690,30 @@ version = "1.4.1+1"
 # ╠═19b25f5b-b995-444b-bc2f-8a5a9c17c100
 # ╟─3956c102-8dd7-4901-a4e2-0b7988640194
 # ╠═6da1e762-70bb-42bd-b968-17e5c878f708
-# ╠═fa732d6c-be8f-4cbe-afe9-627887020627
-# ╠═f9107225-de5d-4ed9-9933-ff12adea699e
 # ╟─40426385-5fc7-42ad-8626-468beca767ea
+# ╠═fa732d6c-be8f-4cbe-afe9-627887020627
+# ╟─53296600-c09e-41f7-9d35-4cf04cf56a81
 # ╠═697ba854-cef4-45c0-9d18-23c7847c1f8b
+# ╟─177ef1a0-038c-4a50-ae69-dd18f8027ae4
+# ╠═724689b7-54a6-4f51-89c8-1b249db54fcf
 # ╟─447d4078-d407-4f27-b10a-0d17c4ec1a1a
 # ╠═e4d22509-fc71-4727-a49e-38aa0a195655
-# ╟─f1192a2a-f822-44ab-8226-52545f1ac6c5
+# ╠═f1192a2a-f822-44ab-8226-52545f1ac6c5
 # ╟─45823220-4d39-4bea-b227-e1bd4670f9f9
 # ╟─73a8a705-6081-4551-8c96-f4504e7b9f6d
 # ╟─7b1e3bad-9ff0-4833-93b1-3f9b4e4cd61d
-# ╠═a2956b5b-99e7-467d-a60e-552006808800
+# ╟─a2956b5b-99e7-467d-a60e-552006808800
 # ╟─bb69ddc5-8d8d-4248-bd60-f598964aea56
 # ╠═7d5543b8-50e2-4c4d-9efc-840f85dc8ec8
 # ╟─2145a779-9a24-429d-af9f-919125859136
 # ╠═7c0b4013-d858-4cc1-9dd3-b9aa9e54a078
+# ╠═c24510be-dc38-42e4-946a-bcef4b817cda
 # ╠═ef52fdeb-7fa2-4c06-addd-f65e486cdb0d
 # ╠═67312d23-417a-4f3d-ba12-03d0adeb33ac
 # ╟─1afc71b0-08ea-453b-8e71-dfe4f4b4bfc1
 # ╠═cb64a24e-8a8b-4d69-a129-624d96f16656
 # ╠═c132e982-0f6e-4d5a-8ae1-d0bf9e52de4a
 # ╠═6ba75d25-b5c1-419e-95a0-0a946cca05a7
-# ╠═a0a0a9f5-0717-4b0d-9b33-80db05ca40c2
 # ╟─92d1e078-bdb5-4ed2-9f12-68b5a02584d3
 # ╟─af7b5b94-29f6-4652-83ad-9290f4124d12
 # ╠═45a5a312-8fd6-4442-8ca0-21e3604a2061
@@ -2711,9 +2725,10 @@ version = "1.4.1+1"
 # ╠═ff30abc6-cecd-43ad-83be-d43c078c6f71
 # ╠═2a85c951-5497-4145-90fc-0506a83a5e88
 # ╟─84a7992b-046b-4401-9320-75acd601c104
-# ╠═cf8ec1fb-07fd-41df-9712-a0d85a77ab22
+# ╟─cf8ec1fb-07fd-41df-9712-a0d85a77ab22
 # ╟─3b616155-64b1-4e01-81aa-bd330494e29e
 # ╟─38ca6db1-2f36-47ea-b7ae-326a550eac29
+# ╟─857dc8d5-e96c-4ac5-a2f2-bab07fca8542
 # ╟─215d7e6b-53ca-4d94-bdde-7cb6ee3554c7
 # ╟─6701af21-882e-4683-a02b-05c473eff995
 # ╟─7cc3054e-8b0f-49e6-911c-f633d952aeb8
@@ -2725,6 +2740,8 @@ version = "1.4.1+1"
 # ╠═71e48c67-ee51-4e69-b8eb-93c19cd95f4d
 # ╠═a46e2fff-5967-45a7-bdff-de3dd17bb6bf
 # ╠═c62d33e2-b647-4c40-901f-3a7382b18289
+# ╟─e4494982-70e0-4f2b-8ea0-d2f8828948b2
+# ╟─d0cbfab9-6e38-403f-9d12-2a07e145ce7d
 # ╠═97019084-b64c-4845-a466-4b5ddaccd846
 # ╠═0c7acd80-b741-4515-80c0-62ad18e794aa
 # ╠═a44b0660-c2f2-4ede-972c-3a6404649dae
@@ -2732,14 +2749,13 @@ version = "1.4.1+1"
 # ╟─2fe42b52-44d2-45af-8a8d-e1fbd463723e
 # ╟─0ab48aad-8a16-40d8-b980-7d6e083ea923
 # ╟─2e2bd7bb-1027-4bb8-9335-5b980043909d
-# ╠═6ddeb872-299b-4ff2-a695-233213fbe857
 # ╟─41ab15f9-4fae-46ce-9c9c-8cde32734b70
 # ╟─b127855f-80b7-4889-9070-72cee1f34fd9
 # ╠═b6384ce6-3d1d-42f3-8c47-38015c838ba0
-# ╠═5b0c5b71-2ba9-41e8-b177-904ead95aa6e
 # ╟─43125213-a3bf-4eeb-9e3a-757176bc4518
 # ╟─6cb29ad0-6837-42d0-9cb6-1e6157ca078c
 # ╟─339b2ff5-69de-4340-af2f-09192239c044
+# ╠═5b0c5b71-2ba9-41e8-b177-904ead95aa6e
 # ╠═61077a88-4487-495d-8418-4c36b9d2f48c
 # ╠═ae7bd4e6-ba54-4979-9d46-38eeec397b16
 # ╠═afb077c8-6993-4c95-9a08-68bd7b53cee3
