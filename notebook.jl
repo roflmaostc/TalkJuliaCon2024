@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.42
+# v0.19.43
 
 using Markdown
 using InteractiveUtils
@@ -48,7 +48,7 @@ md"""# 0. Wave and Ray Optics for Light Based Tomographic 3D printing
 
 
 
-[Felix Wechsler](https://felixwechsler.science/), PhD student EPFL in Switzerland.
+[Felix Wechsler](https://felixwechsler.science/), PhD student at EPFL in Switzerland.
 
 
 !!! error "Abstract"
@@ -74,7 +74,7 @@ md"# 1. Tomographic Additive Manufacturing (TVAM)
 md"### General Setup
 * Collimated Light is projected onto a light modulator
 * the light modulator modulates grayscale images
-* those images are re-imaged into the rotation resin
+* those images are re-imaged into the rotating resin
 * the images are changed for different rotation angles
 
 
@@ -87,9 +87,14 @@ md"### General Setup
 * Optical components
 
 
+### References
+* *Loterie, D., Delrot, P. & Moser, C. High-resolution tomographic volumetric additive manufacturing. Nat Commun 11, 852 (2020).*
+* *Kelly, B. E. et al. Volumetric additive manufacturing via tomographic reconstruction. Science 363, 1075–1079 (2019).*
+
+
 "
 
-# ╔═╡ 334612a8-f0d4-4892-b5be-b3ae6a98cec0
+# ╔═╡ ccb88a57-b702-47ae-bc57-1a2c2fe10241
 load("setup.png")
 
 # ╔═╡ f75e0d3a-8dad-488d-87e4-b2c989fe0033
@@ -158,7 +163,7 @@ Because intensity is distributed everywhere, the reconstruction is blurry.
 $$(\mathcal{R}_{\mu}^* g)(x, y) = \int_{0}^{2\pi} g( \pmb{\omega} \cdot [x,y]^{\intercal}, \theta) \,\, \mathrm{d}\theta$$
 
 
-In classical compputed tomography (CT), people apply a filter to obtain the *filtered backprojection* which results in the perfect reconstruction.
+In classical computed tomography (CT), people apply a filter to obtain the *filtered backprojection* which results in the perfect reconstruction.
 The problem is, the filtered backprojection results in negative projection intensities which we can not realize with our laser light source.
 
 where $\omega=(\cos \theta, \sin \theta)$.
@@ -168,16 +173,24 @@ where $\omega=(\cos \theta, \sin \theta)$.
 @time julia_logo_b = backproject(sinogram_j, angles);
 
 # ╔═╡ 53296600-c09e-41f7-9d35-4cf04cf56a81
-md"### Blurry Julia"
+md"### Blurry Julia with Backprojection"
 
 # ╔═╡ 697ba854-cef4-45c0-9d18-23c7847c1f8b
-simshow(julia_logo_b, cmap=:turbo)
+simshow(julia_logo_b, cmap=:gray)
 
 # ╔═╡ 177ef1a0-038c-4a50-ae69-dd18f8027ae4
-md"### Sharp Julia"
+md"### Sharp Julia with Filtered Backprojection
+"
 
 # ╔═╡ 724689b7-54a6-4f51-89c8-1b249db54fcf
 simshow(backproject_filtered(sinogram_j, angles), cmap=:gray)
+
+# ╔═╡ b69e4926-586b-4024-9396-c22ec4deb226
+md"""### Problem
+The filtered backprojection introduces negative projection patterns.
+And negative intensities are not possible with a single laser.
+
+"""
 
 # ╔═╡ 447d4078-d407-4f27-b10a-0d17c4ec1a1a
 md"## Resin has a threshold tolerance
@@ -202,7 +215,7 @@ As seen, taking the Radon transform and backprojecting those patterns does not w
 Instead, we need to solve the following optimization problem:
 
 !!! info "Optimization Problem"
-	What are the patterns $p$ such that object voxels receive more intensity than an upper threshold $T_U$ and void voxels receive less intensity than a lower threshold $T_L$?
+	What are the backprojected non-negative patterns $p$ such that object voxels receive more intensity than an upper threshold $T_U$ and void voxels receive less intensity than a lower threshold $T_L$?
 
 We can use gradient descent and automatic differentiation to solve this problem.
 
@@ -269,11 +282,8 @@ end
 
 # ╔═╡ 7c0b4013-d858-4cc1-9dd3-b9aa9e54a078
 geometry_extreme = RadonFlexibleCircle(N,
-	                                   range(-10, 99, 199), 
-									   range(-20, 20, 199))
-
-# ╔═╡ c24510be-dc38-42e4-946a-bcef4b817cda
-length( -99:100)
+	                                   range(-99, 99, 199), 
+									   range(-30, 30, 199))
 
 # ╔═╡ ef52fdeb-7fa2-4c06-addd-f65e486cdb0d
 @time projected_extreme = backproject(sinogram, [0.0]; geometry=geometry_extreme);
@@ -295,7 +305,7 @@ angles5 = range(0, 2π, 500)
 # ╔═╡ 92d1e078-bdb5-4ed2-9f12-68b5a02584d3
 md"## SwissVAMyKnife.jl
 
-We pack all tools required for [SwissVAMyKnife.jl](https://github.com/EPFL-LAPD/SwissVAMyKnife.jl) into one package.
+[SwissVAMyKnife.jl](https://github.com/EPFL-LAPD/SwissVAMyKnife.jl) is the only toolbox you need to Tomographic Volumetric Additive Manufacturing.
 
 
 * Include absorption of resin
@@ -303,6 +313,9 @@ We pack all tools required for [SwissVAMyKnife.jl](https://github.com/EPFL-LAPD/
 * Ray and wave optics
 
 "
+
+# ╔═╡ 13f2c193-e19c-4e1d-9142-3bd6b1a67d41
+md"### Let's demonstrate how to optimize patterns"
 
 # ╔═╡ af7b5b94-29f6-4652-83ad-9290f4124d12
 md"### Target Volume"
@@ -317,11 +330,25 @@ begin
 	target = target[begin:3:end, begin:3:end, begin:3:end]
 end;
 
+# ╔═╡ a45427d5-f987-447c-9889-101836d757be
+simshow(target[70, :, :])
+
 # ╔═╡ 38b16261-b394-4ace-9a1f-452c1ee96c29
-md"### Loss Function and Optimizer"
+md"### Loss Function
+
+Properties of the loss function:
+* Void voxels receive less than 0.9 normalized energy.
+* And object voxels should receive more energy than 0.97.
+"
 
 # ╔═╡ a86bad03-06c5-4a8e-9f63-aa98e6ef67ad
 loss = LossThreshold(thresholds=(0.9, 0.97))
+
+# ╔═╡ 729fa8ff-e2e8-4ae4-b629-bf49358f9dfc
+md"### Optimizer
+L-BFGS works much faster than Adam.
+
+"
 
 # ╔═╡ 3e811eb2-dc71-4ee5-89f7-d53fa1d4535b
 optimizer = GradientBased(optimizer=Optim.LBFGS(), options=Optim.Options(iterations=20, store_trace=true,
@@ -372,15 +399,12 @@ md"Different projection patterns: $(@bind angle PlutoUI.Slider(axes(patterns_via
 # ╔═╡ 7164b463-8a83-4717-a736-94031ef41439
 simshow(Array(patterns_vial[:,angle,:] ./ maximum(patterns_vial))[end:-1:begin, :]', cmap=:turbo, set_one=false)
 
-# ╔═╡ 0edcc008-699e-4245-af30-a96636955eb8
-
-
 # ╔═╡ 2b9b6498-2231-427f-9224-9abd8443a736
 md"## WaveOpticsPropagation.jl
 * Ray optics is only valid in the macroscopic world.
 * Wave optics is valid in the microscopic world
 
-WaveOpticsPropagation provides routines for free space wave propagation such as the Angular Spectrum Method of Plane Waves (ASPW) or Fraunhofer propopagation.
+[WaveOpticsPropagation.jl](https://github.com/JuliaPhysics/WaveOpticsPropagation.jl) provides routines for free space wave propagation such as the Angular Spectrum Method of Plane Waves (ASPW) or Fraunhofer propopagation.
 The routines are backed up by reverse differentiation rules for the input field.
 
 "
@@ -407,16 +431,39 @@ begin
 end;
 
 # ╔═╡ 0c7acd80-b741-4515-80c0-62ad18e794aa
-AS = AngularSpectrum(field, z, λ, L);
+AS = AngularSpectrum(field, z, λ, L)
 
 # ╔═╡ a44b0660-c2f2-4ede-972c-3a6404649dae
-field_p = AS(field);
+@time field_p = AS(field);
 
 # ╔═╡ f50ae1bc-1f7b-4d17-9272-f2279d5ca329
 heatmap(z .* 1_000_000, fftpos(L[1] * 1_000_000, 399, CenterFT),  (backproject(sinogram_j3[:, 1:1], [0])' .> 0)[1:399, 1:399] .* reverse(abs2.(field_p[:, 1, :]), dims=(1,)), xlabel = "z in \$\\mu m\$", ylabel = "x in \$\\mu m\$", aspect_ratio=:equal, xlim=(0, 1000), title="Wave Optics")
 
 # ╔═╡ 2fe42b52-44d2-45af-8a8d-e1fbd463723e
 heatmap(backproject(sinogram_j3[:, 1:1], [0])'[end:-1:begin, :], aspect_ratio=:equal, xlim=(0, 400), title="Ray Optics")
+
+# ╔═╡ 033122c7-6afb-4232-bd4e-fde29067b985
+md"#### Issues with Differentiable Routines in Julia
+
+Writing differentiable code in Julia is significantly harder than in PyTorch or Jax.
+
+Further, to achieve similar CUDA performance, quite often I need to fall back to in-place methods which are not supported by the AD libraries
+"
+
+# ╔═╡ d0e27ab0-a8db-4b17-a676-8481684d2bbf
+md"""
+```julia
+function (as::)(field; crop=true)
+    fill!(as.buffer2, 0)
+    fieldp = set_center!(as.buffer2, field, broadcast=true)
+    field_imd = as.p * ifftshift!(as.buffer, fieldp, (1, 2))
+    field_imd .*= as.HW
+    field_out = fftshift!(as.buffer2, inv(as.p) * field_imd, (1, 2))
+    field_out_cropped = as.padding && crop ? crop_center(field_out, size(field), return_view=true) : field_out
+    return field_out_cropped
+end
+```
+"""
 
 # ╔═╡ 0ab48aad-8a16-40d8-b980-7d6e083ea923
 md"# 6. Wave Optics for TVAM
@@ -506,10 +553,10 @@ end
 @mytime _imrotate(julia_logo, deg2rad(40));
 
 # ╔═╡ 0265c39b-d981-49f0-b696-8385b9d64a80
-julia_logo_c = CuArray(julia_logo);
+julia_logo_c = togoc(julia_logo);
 
 # ╔═╡ 6ba75d25-b5c1-419e-95a0-0a946cca05a7
-CUDA.@time radon(julia_logo_c, angles5);
+@mytime radon(julia_logo_c, angles5);
 
 # ╔═╡ 93be5ce3-e335-4500-a3bd-1cad5698305c
 @mytime _imrotate(julia_logo_c, deg2rad(40));
@@ -2677,7 +2724,7 @@ version = "1.4.1+1"
 # ╟─b595a0be-9f3a-431b-af4b-1093ca1597d2
 # ╟─27d5c3e5-139f-4830-a569-b41cf0e954b9
 # ╟─ae487900-9801-4863-b65e-f6e3d91c9f87
-# ╟─334612a8-f0d4-4892-b5be-b3ae6a98cec0
+# ╟─ccb88a57-b702-47ae-bc57-1a2c2fe10241
 # ╟─f75e0d3a-8dad-488d-87e4-b2c989fe0033
 # ╟─d238e778-d7b6-4f3b-997a-b167407536b0
 # ╟─8e88bd76-5bf7-4f5b-8baf-4831c6a13a87
@@ -2696,6 +2743,7 @@ version = "1.4.1+1"
 # ╠═697ba854-cef4-45c0-9d18-23c7847c1f8b
 # ╟─177ef1a0-038c-4a50-ae69-dd18f8027ae4
 # ╠═724689b7-54a6-4f51-89c8-1b249db54fcf
+# ╟─b69e4926-586b-4024-9396-c22ec4deb226
 # ╟─447d4078-d407-4f27-b10a-0d17c4ec1a1a
 # ╠═e4d22509-fc71-4727-a49e-38aa0a195655
 # ╠═f1192a2a-f822-44ab-8226-52545f1ac6c5
@@ -2707,7 +2755,6 @@ version = "1.4.1+1"
 # ╠═7d5543b8-50e2-4c4d-9efc-840f85dc8ec8
 # ╟─2145a779-9a24-429d-af9f-919125859136
 # ╠═7c0b4013-d858-4cc1-9dd3-b9aa9e54a078
-# ╠═c24510be-dc38-42e4-946a-bcef4b817cda
 # ╠═ef52fdeb-7fa2-4c06-addd-f65e486cdb0d
 # ╠═67312d23-417a-4f3d-ba12-03d0adeb33ac
 # ╟─1afc71b0-08ea-453b-8e71-dfe4f4b4bfc1
@@ -2715,11 +2762,14 @@ version = "1.4.1+1"
 # ╠═c132e982-0f6e-4d5a-8ae1-d0bf9e52de4a
 # ╠═6ba75d25-b5c1-419e-95a0-0a946cca05a7
 # ╟─92d1e078-bdb5-4ed2-9f12-68b5a02584d3
+# ╟─13f2c193-e19c-4e1d-9142-3bd6b1a67d41
 # ╟─af7b5b94-29f6-4652-83ad-9290f4124d12
 # ╠═45a5a312-8fd6-4442-8ca0-21e3604a2061
 # ╠═95f350ec-73e6-44db-b01c-9ba1386eec66
+# ╠═a45427d5-f987-447c-9889-101836d757be
 # ╟─38b16261-b394-4ace-9a1f-452c1ee96c29
 # ╠═a86bad03-06c5-4a8e-9f63-aa98e6ef67ad
+# ╟─729fa8ff-e2e8-4ae4-b629-bf49358f9dfc
 # ╠═3e811eb2-dc71-4ee5-89f7-d53fa1d4535b
 # ╟─dc368f18-cedb-4f78-8779-8415fd5bc128
 # ╠═ff30abc6-cecd-43ad-83be-d43c078c6f71
@@ -2735,7 +2785,6 @@ version = "1.4.1+1"
 # ╟─a61091a6-bd57-4e69-ae30-823ea8a38715
 # ╟─29530df7-37ec-4148-a75a-6386022c300e
 # ╠═7164b463-8a83-4717-a736-94031ef41439
-# ╠═0edcc008-699e-4245-af30-a96636955eb8
 # ╟─2b9b6498-2231-427f-9224-9abd8443a736
 # ╠═71e48c67-ee51-4e69-b8eb-93c19cd95f4d
 # ╠═a46e2fff-5967-45a7-bdff-de3dd17bb6bf
@@ -2747,6 +2796,8 @@ version = "1.4.1+1"
 # ╠═a44b0660-c2f2-4ede-972c-3a6404649dae
 # ╟─f50ae1bc-1f7b-4d17-9272-f2279d5ca329
 # ╟─2fe42b52-44d2-45af-8a8d-e1fbd463723e
+# ╟─033122c7-6afb-4232-bd4e-fde29067b985
+# ╟─d0e27ab0-a8db-4b17-a676-8481684d2bbf
 # ╟─0ab48aad-8a16-40d8-b980-7d6e083ea923
 # ╟─2e2bd7bb-1027-4bb8-9335-5b980043909d
 # ╟─41ab15f9-4fae-46ce-9c9c-8cde32734b70
