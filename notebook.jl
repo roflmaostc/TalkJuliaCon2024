@@ -47,16 +47,12 @@ togoc(x) = use_CUDA[] ? CuArray(x) : x
 TableOfContents()
 
 # ╔═╡ bb48c0a7-352c-422f-bdd2-7ed7baa0e1db
-md"## Slides
-
-github.com/roflmaostc/TalkJuliaCon2024
+md"## Slides Availability
+**go.epfl.ch/juliacon**
 "
 
-# ╔═╡ 004bf4ce-823b-49b2-9005-3bd12184d697
-code = QRCode("https://github.com/roflmaostc/TalkJuliaCon2024", version=15, width=2);
-
-# ╔═╡ 59ce83b1-13f2-4883-af68-d285fdc15e38
-Linear()
+# ╔═╡ 708d5cce-4fd0-4c48-92bc-47bd7f20e486
+simshow(select_region(qrcode("https://go.epfl.ch/juliacon"), M=2));
 
 # ╔═╡ 6907dc0e-21c0-4de7-85c3-fe5030d139c2
 md"""# 0. Wave and Ray Optics for Light Based Tomographic 3D printing
@@ -140,7 +136,10 @@ md"## Let's take the Julia Logo"
 julia_logo = Float32.(select_region(ImageShow.Gray.(urldownload("https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Julia_Programming_Language_Logo.svg/320px-Julia_Programming_Language_Logo.svg.png")) .> 0, new_size=(400, 400)));
 
 # ╔═╡ 035d2bba-13fe-419a-97de-a1193713d65f
-simshow(select_region(imageinqrcode(code, round.(Bool, julia_logo[begin:6:end, begin:6:end])), M=1.3))
+begin
+	code = QRCode("https://go.epfl.ch/juliacon", version=13, width=3);
+	simshow(select_region(imageinqrcode(code, round.(Bool, julia_logo[begin:6:end, begin:6:end])), M=2))
+end
 
 # ╔═╡ 4092cfef-58d0-460e-9d72-80b70f35bad5
 simshow(julia_logo)
@@ -511,7 +510,7 @@ In terms of speeds, comparable to PyTorch torchvision's rotate.
 @bind rot_angle Slider(range(0, 2π, 200), show_value=true)
 
 # ╔═╡ b6384ce6-3d1d-42f3-8c47-38015c838ba0
-simshow(imrotate(julia_logo, rot_angle))
+simshow(DiffImageRotation.imrotate(julia_logo, rot_angle))
 
 # ╔═╡ 43125213-a3bf-4eeb-9e3a-757176bc4518
 md"### How the code roughly looks like"
@@ -2873,9 +2872,8 @@ version = "1.4.1+1"
 # ╠═5ac9be06-63ac-4a82-a747-1b409d5ae51a
 # ╠═199f2467-04a1-4774-9728-8a9ca44d6d88
 # ╟─bb48c0a7-352c-422f-bdd2-7ed7baa0e1db
-# ╠═004bf4ce-823b-49b2-9005-3bd12184d697
-# ╠═035d2bba-13fe-419a-97de-a1193713d65f
-# ╠═59ce83b1-13f2-4883-af68-d285fdc15e38
+# ╟─708d5cce-4fd0-4c48-92bc-47bd7f20e486
+# ╟─035d2bba-13fe-419a-97de-a1193713d65f
 # ╟─6907dc0e-21c0-4de7-85c3-fe5030d139c2
 # ╟─b595a0be-9f3a-431b-af4b-1093ca1597d2
 # ╟─27d5c3e5-139f-4830-a569-b41cf0e954b9
