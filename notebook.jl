@@ -15,13 +15,7 @@ macro bind(def, element)
 end
 
 # ╔═╡ 7a3645c0-323c-11ef-3dc8-7bd7a1e1823e
-using SwissVAMyKnife, CUDA, ImageShow, UrlDownload, FFTW, PlutoUI,RadonKA, WaveOpticsPropagation, ImageMagick, NDTools, Plots, FileIO, DiffImageRotation, Zygote, Optim
-
-# ╔═╡ c0009d9d-f8b7-48f1-80e4-4c4ce62c408d
-using FourierTools
-
-# ╔═╡ a5524af5-3494-4207-a224-5fc6cd2bc652
-using QRCoders, ImageTransformations, Interpolations
+using SwissVAMyKnife, CUDA, ImageShow, UrlDownload, FFTW, PlutoUI,RadonKA, WaveOpticsPropagation, ImageMagick, NDTools, Plots, FileIO, DiffImageRotation, Zygote, Optim, FourierTools, PlutoTeachingTools, QRCoders, ImageTransformations, Interpolations
 
 # ╔═╡ 5b0c5b71-2ba9-41e8-b177-904ead95aa6e
 using KernelAbstractions, Atomix
@@ -45,6 +39,9 @@ togoc(x) = use_CUDA[] ? CuArray(x) : x
 
 # ╔═╡ 199f2467-04a1-4774-9728-8a9ca44d6d88
 TableOfContents()
+
+# ╔═╡ a1f06b5e-bfef-4f21-95b5-67b46623983a
+ChooseDisplayMode()
 
 # ╔═╡ bb48c0a7-352c-422f-bdd2-7ed7baa0e1db
 md"## Slides Availability
@@ -618,6 +615,7 @@ KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
 NDTools = "98581153-e998-4eef-8d0d-5ec2c052313d"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+PlutoTeachingTools = "661c6b06-c737-4d37-b85c-46df65de6f69"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 QRCoders = "f42e9828-16f3-11ed-2883-9126170b272d"
 RadonKA = "86de8297-835b-47df-b249-c04e8db91db5"
@@ -641,6 +639,7 @@ KernelAbstractions = "~0.9.21"
 NDTools = "~0.6.0"
 Optim = "~1.9.4"
 Plots = "~1.40.4"
+PlutoTeachingTools = "~0.2.15"
 PlutoUI = "~0.7.59"
 QRCoders = "~1.4.5"
 RadonKA = "~0.6.1"
@@ -656,7 +655,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "a34ebab88243bbdab924e5234bb9eb6d3a2bc801"
+project_hash = "a1b9f85bb2efc6ef639e9e098e9b044619fd116f"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -860,6 +859,12 @@ weakdeps = ["SparseArrays"]
 
     [deps.ChainRulesCore.extensions]
     ChainRulesCoreSparseArraysExt = "SparseArrays"
+
+[[deps.CodeTracking]]
+deps = ["InteractiveUtils", "UUIDs"]
+git-tree-sha1 = "c0216e792f518b39b22212127d4a84dc31e4e386"
+uuid = "da1fd8a2-8d9e-5ec2-8556-3022fb5608a2"
+version = "1.3.5"
 
 [[deps.CodecZlib]]
 deps = ["TranscodingStreams", "Zlib_jll"]
@@ -1534,6 +1539,12 @@ git-tree-sha1 = "c84a835e1a09b289ffcd2271bf2a337bbdda6637"
 uuid = "aacddb02-875f-59d6-b918-886e6ef4fbf8"
 version = "3.0.3+0"
 
+[[deps.JuliaInterpreter]]
+deps = ["CodeTracking", "InteractiveUtils", "Random", "UUIDs"]
+git-tree-sha1 = "a6adc2dcfe4187c40dc7c2c9d2128e326360e90a"
+uuid = "aa1ae85d-cabe-5617-a682-6adf51b2e16a"
+version = "0.9.32"
+
 [[deps.JuliaNVTXCallbacks_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "af433a10f3942e882d3c671aacb203e006a5808f"
@@ -1746,6 +1757,12 @@ deps = ["Dates", "Logging"]
 git-tree-sha1 = "c1dd6d7978c12545b4179fb6153b9250c96b0075"
 uuid = "e6f89c97-d47a-5376-807f-9c37f3926c36"
 version = "1.0.3"
+
+[[deps.LoweredCodeUtils]]
+deps = ["JuliaInterpreter"]
+git-tree-sha1 = "eeaedcf337f33c039f9f3a209a8db992deefd7e9"
+uuid = "6f1432cf-f94c-5a45-995e-cdbf5db27b0b"
+version = "2.4.8"
 
 [[deps.MIMEs]]
 git-tree-sha1 = "65f28ad4b594aebe22157d6fac869786a255b7eb"
@@ -2074,6 +2091,24 @@ version = "1.40.4"
     ImageInTerminal = "d8c32880-2388-543b-8c61-d9f865259254"
     Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
+[[deps.PlutoHooks]]
+deps = ["InteractiveUtils", "Markdown", "UUIDs"]
+git-tree-sha1 = "072cdf20c9b0507fdd977d7d246d90030609674b"
+uuid = "0ff47ea0-7a50-410d-8455-4348d5de0774"
+version = "0.0.5"
+
+[[deps.PlutoLinks]]
+deps = ["FileWatching", "InteractiveUtils", "Markdown", "PlutoHooks", "Revise", "UUIDs"]
+git-tree-sha1 = "8f5fa7056e6dcfb23ac5211de38e6c03f6367794"
+uuid = "0ff47ea0-7a50-410d-8455-4348d5de0420"
+version = "0.1.6"
+
+[[deps.PlutoTeachingTools]]
+deps = ["Downloads", "HypertextLiteral", "LaTeXStrings", "Latexify", "Markdown", "PlutoLinks", "PlutoUI", "Random"]
+git-tree-sha1 = "5d9ab1a4faf25a62bb9d07ef0003396ac258ef1c"
+uuid = "661c6b06-c737-4d37-b85c-46df65de6f69"
+version = "0.2.15"
+
 [[deps.PlutoUI]]
 deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "FixedPointNumbers", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "MIMEs", "Markdown", "Random", "Reexport", "URIs", "UUIDs"]
 git-tree-sha1 = "ab55ee1510ad2af0ff674dbcced5e94921f867a9"
@@ -2224,6 +2259,12 @@ deps = ["UUIDs"]
 git-tree-sha1 = "838a3a4188e2ded87a4f9f184b4b0d78a1e91cb7"
 uuid = "ae029012-a4dd-5104-9daa-d747884805df"
 version = "1.3.0"
+
+[[deps.Revise]]
+deps = ["CodeTracking", "Distributed", "FileWatching", "JuliaInterpreter", "LibGit2", "LoweredCodeUtils", "OrderedCollections", "Pkg", "REPL", "Requires", "UUIDs", "Unicode"]
+git-tree-sha1 = "85ddd93ea15dcd8493400600e09104a9e94bb18d"
+uuid = "295af30f-e4ad-537b-8983-00126c2a3abe"
+version = "3.5.15"
 
 [[deps.Rotations]]
 deps = ["LinearAlgebra", "Quaternions", "Random", "StaticArrays"]
@@ -2858,13 +2899,12 @@ version = "1.4.1+1"
 
 # ╔═╡ Cell order:
 # ╠═7a3645c0-323c-11ef-3dc8-7bd7a1e1823e
-# ╠═c0009d9d-f8b7-48f1-80e4-4c4ce62c408d
-# ╠═a5524af5-3494-4207-a224-5fc6cd2bc652
 # ╟─5d3208f4-ed6e-40e9-9fa9-6576c388412d
 # ╠═3db91ec5-dba9-46bf-9b69-15017ebe56cc
 # ╠═564c21f1-64b0-4ebf-8b4f-5564a5c3a663
 # ╠═5ac9be06-63ac-4a82-a747-1b409d5ae51a
 # ╠═199f2467-04a1-4774-9728-8a9ca44d6d88
+# ╟─a1f06b5e-bfef-4f21-95b5-67b46623983a
 # ╟─bb48c0a7-352c-422f-bdd2-7ed7baa0e1db
 # ╟─708d5cce-4fd0-4c48-92bc-47bd7f20e486
 # ╟─6907dc0e-21c0-4de7-85c3-fe5030d139c2
