@@ -31,7 +31,7 @@ use_CUDA = Ref(true && CUDA.functional())
 
 # ╔═╡ 5d3208f4-ed6e-40e9-9fa9-6576c388412d
 md" ## CUDA
-CUDA accelerates the pattern generation easily by 5-20 times!
+CUDA accelerates the large array calculations by 5-20 times in this notebook!
 Otherwise most of the code will be multithreaded on your CPU but we strongly recommended the usage of CUDA for large scale 3D pattern generation.
 
 Your CUDA is functional: **$(use_CUDA[])**
@@ -52,7 +52,7 @@ md"## Slides Availability
 "
 
 # ╔═╡ 708d5cce-4fd0-4c48-92bc-47bd7f20e486
-simshow(select_region(qrcode("https://go.epfl.ch/juliacon"), M=2));
+simshow(select_region(qrcode("https://go.epfl.ch/juliacon", eclevel=High()), M=1.3))
 
 # ╔═╡ 6907dc0e-21c0-4de7-85c3-fe5030d139c2
 md"""# 0. Wave and Ray Optics for Light Based Tomographic 3D printing
@@ -135,12 +135,6 @@ md"## Let's take the Julia Logo"
 # ╔═╡ 1f3b7d89-784f-4efc-aa46-b900cdbe58c4
 julia_logo = Float32.(select_region(ImageShow.Gray.(urldownload("https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Julia_Programming_Language_Logo.svg/320px-Julia_Programming_Language_Logo.svg.png")) .> 0, new_size=(400, 400)));
 
-# ╔═╡ 035d2bba-13fe-419a-97de-a1193713d65f
-begin
-	code = QRCode("https://go.epfl.ch/juliacon", version=13, width=3);
-	simshow(select_region(imageinqrcode(code, round.(Bool, julia_logo[begin:6:end, begin:6:end])), M=2))
-end
-
 # ╔═╡ 4092cfef-58d0-460e-9d72-80b70f35bad5
 simshow(julia_logo)
 
@@ -190,7 +184,7 @@ where $\omega=(\cos \theta, \sin \theta)$.
 @time julia_logo_b = backproject(sinogram_j, angles);
 
 # ╔═╡ 53296600-c09e-41f7-9d35-4cf04cf56a81
-md"### Blurry Julia with Backprojection"
+md"## Our Printer performs a physical backprojection!"
 
 # ╔═╡ 697ba854-cef4-45c0-9d18-23c7847c1f8b
 simshow(julia_logo_b, cmap=:gray)
@@ -2873,7 +2867,6 @@ version = "1.4.1+1"
 # ╠═199f2467-04a1-4774-9728-8a9ca44d6d88
 # ╟─bb48c0a7-352c-422f-bdd2-7ed7baa0e1db
 # ╟─708d5cce-4fd0-4c48-92bc-47bd7f20e486
-# ╟─035d2bba-13fe-419a-97de-a1193713d65f
 # ╟─6907dc0e-21c0-4de7-85c3-fe5030d139c2
 # ╟─b595a0be-9f3a-431b-af4b-1093ca1597d2
 # ╟─27d5c3e5-139f-4830-a569-b41cf0e954b9
