@@ -72,20 +72,25 @@ urldownload("https://upload.wikimedia.org/wikipedia/commons/e/e2/EPFL_campus_201
 # ╔═╡ 27d5c3e5-139f-4830-a569-b41cf0e954b9
 md"# 1. Tomographic Additive Manufacturing (TVAM)
 
+
+"
+
+# ╔═╡ f75e0d3a-8dad-488d-87e4-b2c989fe0033
+md"## Video in Real Speed"
+
+# ╔═╡ d238e778-d7b6-4f3b-997a-b167407536b0
+PlutoUI.LocalResource("julia_cut.mp4")
+
+# ╔═╡ ae487900-9801-4863-b65e-f6e3d91c9f87
+md"### General Setup
 * TVAM is a single photon absorption printing technique
 * Acrylates are mixed with a photo initiator and polymerize upon illumination with light
 * Parts can be printed within ~20s.
 
-"
-
-# ╔═╡ ae487900-9801-4863-b65e-f6e3d91c9f87
-md"### General Setup
 * Collimated Light is projected onto a light modulator
 * the light modulator modulates grayscale images
 * those images are re-imaged into the rotating resin
 * the images are changed for different rotation angles
-
-
 * mathematically this is reverse Computed Tomography (CT)
 
 
@@ -104,12 +109,6 @@ md"### General Setup
 
 # ╔═╡ ccb88a57-b702-47ae-bc57-1a2c2fe10241
 load("setup.png")
-
-# ╔═╡ f75e0d3a-8dad-488d-87e4-b2c989fe0033
-md"## Video in Real Speed"
-
-# ╔═╡ d238e778-d7b6-4f3b-997a-b167407536b0
-PlutoUI.LocalResource("julia_cut.mp4")
 
 # ╔═╡ 8e88bd76-5bf7-4f5b-8baf-4831c6a13a87
 md"""# 2. General Introduction - Radon transform
@@ -445,10 +444,13 @@ AS = AngularSpectrum(field, z, λ, L)
 @time field_p = AS(field);
 
 # ╔═╡ f50ae1bc-1f7b-4d17-9272-f2279d5ca329
-heatmap(z .* 1_000_000, fftpos(L[1] * 1_000_000, 399, CenterFT),  (backproject(sinogram_j3[:, 1:1], [0])' .> 0)[1:399, 1:399] .* reverse(abs2.(field_p[:, 1, :]), dims=(1,)), xlabel = "z in \$\\mu m\$", ylabel = "x in \$\\mu m\$", aspect_ratio=:equal, xlim=(0, 1000), title="Wave Optics")
+hms = [heatmap(z .* 1_000_000, fftpos(L[1] * 1_000_000, 399, CenterFT),  (backproject(sinogram_j3[:, 1:1], [0])' .> 0)[1:399, 1:399] .* reverse(abs2.(field_p[:, 1, :]), dims=(1,)), xlabel = "z in \$\\mu m\$", ylabel = "x in \$\\mu m\$", aspect_ratio=:equal, xlim=(0, 1000), title="Wave Optics", ylim=(-500, 500)), heatmap(backproject(sinogram_j3[:, 1:1], [0])'[end:-1:begin, :], aspect_ratio=:equal, xlim=(0, 400), ylim=(00, 400), title="Ray Optics")];
 
 # ╔═╡ 2fe42b52-44d2-45af-8a8d-e1fbd463723e
-heatmap(backproject(sinogram_j3[:, 1:1], [0])'[end:-1:begin, :], aspect_ratio=:equal, xlim=(0, 400), title="Ray Optics")
+hms[1]
+
+# ╔═╡ e0aa1f48-f1f6-439a-8d2f-dae4a0e2996e
+hms[2]
 
 # ╔═╡ 033122c7-6afb-4232-bd4e-fde29067b985
 md"#### Issues with Differentiable Routines in Julia
@@ -461,7 +463,7 @@ Further, to achieve similar CUDA performance, quite often I need to fall back to
 # ╔═╡ d0e27ab0-a8db-4b17-a676-8481684d2bbf
 md"""
 ```julia
-function (as::)(field; crop=true)
+function (as::AngularSpectrum)(field; crop=true)
     fill!(as.buffer2, 0)
     fieldp = set_center!(as.buffer2, field, broadcast=true)
     field_imd = as.p * ifftshift!(as.buffer, fieldp, (1, 2))
@@ -2910,10 +2912,10 @@ version = "1.4.1+1"
 # ╟─6907dc0e-21c0-4de7-85c3-fe5030d139c2
 # ╟─b595a0be-9f3a-431b-af4b-1093ca1597d2
 # ╟─27d5c3e5-139f-4830-a569-b41cf0e954b9
-# ╟─ae487900-9801-4863-b65e-f6e3d91c9f87
-# ╟─ccb88a57-b702-47ae-bc57-1a2c2fe10241
 # ╟─f75e0d3a-8dad-488d-87e4-b2c989fe0033
 # ╟─d238e778-d7b6-4f3b-997a-b167407536b0
+# ╟─ae487900-9801-4863-b65e-f6e3d91c9f87
+# ╟─ccb88a57-b702-47ae-bc57-1a2c2fe10241
 # ╟─8e88bd76-5bf7-4f5b-8baf-4831c6a13a87
 # ╟─7a3c18b8-a252-4dda-aeed-e6743999f64e
 # ╟─1f3b7d89-784f-4efc-aa46-b900cdbe58c4
@@ -2927,13 +2929,13 @@ version = "1.4.1+1"
 # ╟─40426385-5fc7-42ad-8626-468beca767ea
 # ╠═fa732d6c-be8f-4cbe-afe9-627887020627
 # ╟─53296600-c09e-41f7-9d35-4cf04cf56a81
-# ╠═697ba854-cef4-45c0-9d18-23c7847c1f8b
+# ╟─697ba854-cef4-45c0-9d18-23c7847c1f8b
 # ╟─177ef1a0-038c-4a50-ae69-dd18f8027ae4
-# ╠═724689b7-54a6-4f51-89c8-1b249db54fcf
+# ╟─724689b7-54a6-4f51-89c8-1b249db54fcf
 # ╟─b69e4926-586b-4024-9396-c22ec4deb226
 # ╟─447d4078-d407-4f27-b10a-0d17c4ec1a1a
-# ╠═e4d22509-fc71-4727-a49e-38aa0a195655
-# ╠═f1192a2a-f822-44ab-8226-52545f1ac6c5
+# ╟─e4d22509-fc71-4727-a49e-38aa0a195655
+# ╟─f1192a2a-f822-44ab-8226-52545f1ac6c5
 # ╟─45823220-4d39-4bea-b227-e1bd4670f9f9
 # ╟─73a8a705-6081-4551-8c96-f4504e7b9f6d
 # ╟─7b1e3bad-9ff0-4833-93b1-3f9b4e4cd61d
@@ -2951,7 +2953,7 @@ version = "1.4.1+1"
 # ╟─92d1e078-bdb5-4ed2-9f12-68b5a02584d3
 # ╟─13f2c193-e19c-4e1d-9142-3bd6b1a67d41
 # ╟─af7b5b94-29f6-4652-83ad-9290f4124d12
-# ╠═45a5a312-8fd6-4442-8ca0-21e3604a2061
+# ╟─45a5a312-8fd6-4442-8ca0-21e3604a2061
 # ╠═95f350ec-73e6-44db-b01c-9ba1386eec66
 # ╠═a45427d5-f987-447c-9889-101836d757be
 # ╟─38b16261-b394-4ace-9a1f-452c1ee96c29
@@ -2983,6 +2985,7 @@ version = "1.4.1+1"
 # ╠═a44b0660-c2f2-4ede-972c-3a6404649dae
 # ╟─f50ae1bc-1f7b-4d17-9272-f2279d5ca329
 # ╟─2fe42b52-44d2-45af-8a8d-e1fbd463723e
+# ╟─e0aa1f48-f1f6-439a-8d2f-dae4a0e2996e
 # ╟─033122c7-6afb-4232-bd4e-fde29067b985
 # ╟─d0e27ab0-a8db-4b17-a676-8481684d2bbf
 # ╟─0ab48aad-8a16-40d8-b980-7d6e083ea923
