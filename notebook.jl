@@ -182,15 +182,27 @@ where $\omega=(\cos \theta, \sin \theta)$.
 # ╔═╡ 53296600-c09e-41f7-9d35-4cf04cf56a81
 md"## Our Printer performs a physical backprojection!"
 
+# ╔═╡ 9e4e6e36-6ea6-4739-a499-40ffefd34c4e
+@bind angle_slider5 Slider(1:300, default=200, show_value=true)
+
+# ╔═╡ 1e52004e-8975-4896-adb6-c221be015f1c
+angles8 = range(0, 2π, angle_slider5 + 1)[begin:angle_slider5]
+
+# ╔═╡ c6916ca6-c27f-444e-9167-a234e5ea44da
+sinogram_j8 = radon(julia_logo, angles8);
+
+# ╔═╡ 2b4c1b52-50f0-4f36-9245-c2123740c19c
+julia_logo_b8 = backproject(sinogram_j8, angles8);
+
 # ╔═╡ 697ba854-cef4-45c0-9d18-23c7847c1f8b
-simshow(julia_logo_b, cmap=:gray)
+simshow(julia_logo_b8, cmap=:gray)
 
 # ╔═╡ 177ef1a0-038c-4a50-ae69-dd18f8027ae4
 md"### Sharp Julia with Filtered Backprojection
 "
 
 # ╔═╡ 724689b7-54a6-4f51-89c8-1b249db54fcf
-simshow(backproject_filtered(sinogram_j, angles), cmap=:gray)
+simshow(backproject_filtered(sinogram_j8, angles8), cmap=:gray)
 
 # ╔═╡ b69e4926-586b-4024-9396-c22ec4deb226
 md"""### Problem
@@ -398,10 +410,10 @@ Intensity distribution -- after threshold ------- target ------------------ diff
 [simshow(Array(printed_intensity_vial[:, :, slice2]), set_one=false, cmap=:turbo) simshow(ones((size(target, 1), 5))) simshow(thresh4 .< Array(printed_intensity_vial[:, :, slice2])) simshow(ones((size(target, 1), 5))) simshow(Array(target[:, :, slice2]))  simshow(ones((size(target, 1), 5))) simshow(Array(togoc(target)[:, :, slice2] .!= (thresh4 .< (printed_intensity_vial[:, :, slice2]))))]
 
 # ╔═╡ a61091a6-bd57-4e69-ae30-823ea8a38715
-md"### Analyze Patterns"
+md"### Analyze Projection Pattern"
 
 # ╔═╡ 29530df7-37ec-4148-a75a-6386022c300e
-md"Different projection patterns: $(@bind angle PlutoUI.Slider(axes(patterns_vial, 2), show_value=true, default=0.5))"
+md"Different projection pattern angle: $(@bind angle PlutoUI.Slider(axes(patterns_vial, 2), show_value=true, default=0.5))"
 
 # ╔═╡ 7164b463-8a83-4717-a736-94031ef41439
 simshow(Array(patterns_vial[:,angle,:] ./ maximum(patterns_vial))[end:-1:begin, :]', cmap=:turbo, set_one=false)
@@ -2929,7 +2941,11 @@ version = "1.4.1+1"
 # ╟─40426385-5fc7-42ad-8626-468beca767ea
 # ╠═fa732d6c-be8f-4cbe-afe9-627887020627
 # ╟─53296600-c09e-41f7-9d35-4cf04cf56a81
-# ╟─697ba854-cef4-45c0-9d18-23c7847c1f8b
+# ╟─9e4e6e36-6ea6-4739-a499-40ffefd34c4e
+# ╠═1e52004e-8975-4896-adb6-c221be015f1c
+# ╠═c6916ca6-c27f-444e-9167-a234e5ea44da
+# ╠═2b4c1b52-50f0-4f36-9245-c2123740c19c
+# ╠═697ba854-cef4-45c0-9d18-23c7847c1f8b
 # ╟─177ef1a0-038c-4a50-ae69-dd18f8027ae4
 # ╟─724689b7-54a6-4f51-89c8-1b249db54fcf
 # ╟─b69e4926-586b-4024-9396-c22ec4deb226
