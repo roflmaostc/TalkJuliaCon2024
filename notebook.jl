@@ -250,7 +250,7 @@ md"# 4. Summary TVAM
 "
 
 # ╔═╡ 7b1e3bad-9ff0-4833-93b1-3f9b4e4cd61d
-load("general.png")
+select_region(load("general.png"), M=1.0)
 
 # ╔═╡ a2956b5b-99e7-467d-a60e-552006808800
 md"# 5. Julia Solutions
@@ -267,7 +267,7 @@ What we had to create:
 
 
 As a rough estimate, we optimize patterns of size $1024 \times 768$ for $1000$ angles. That is almost a billion variables.
-Further, the 3D Radon transform has a computational complexity of $N^3 \times N_\text{angles}$ where $N$ is the discretization of the volume.
+Further, the 3D Radon transform has a computational complexity of $\mathcal{O}(N^3 \times N_\text{angles})$ where $N$ is the discretization of the volume.
 So pattern optimization for TVAM is a very heavy optimization problem.
 
 "
